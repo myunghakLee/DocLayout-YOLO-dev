@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch-size', default=16, required=False, type=int)
     parser.add_argument('--image-size', default=None, required=True, type=int)
     parser.add_argument('--mosaic', default=1.0, required=False, type=float)
+    parser.add_argument('--rotate90', default=0.0, required=False, type=float)
     parser.add_argument('--pretrain', default=None, required=False, type=str)
     parser.add_argument('--val', default=1, required=False, type=int)
     parser.add_argument('--val-period', default=1, required=False, type=int)
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument('--project', default=None, required=True, type=str)
     parser.add_argument('--resume', action=argparse.BooleanOptionalAction)
     parser.add_argument('--workers', default=4, required=False, type=int)
-    parser.add_argument('--device', default="0,1,2,3,4,5,6,7", required=False, type=str)
+    parser.add_argument('--device', default="0", required=False, type=str)
     parser.add_argument('--save-period', default=10, required=False, type=int)
     parser.add_argument('--patience', default=100, required=False, type=int)
     args = parser.parse_args()
@@ -69,6 +70,7 @@ if __name__ == "__main__":
         momentum=args.momentum,
         imgsz=args.image_size, 
         mosaic=args.mosaic,
+        rotate90=args.rotate90,
         batch=args.batch_size,
         device=args.device,
         workers=args.workers,

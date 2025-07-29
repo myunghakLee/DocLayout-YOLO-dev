@@ -681,6 +681,70 @@ class RandomFlip:
         return labels
 
 
+class Random90Rotation:
+    """
+    Applies a random 90-degree rotation (0°, 90°, -90°, or 180°) to an image with a given probability.
+    
+    Also updates any instances (bounding boxes, keypoints, etc.) accordingly.
+    """
+
+    def __init__(self, p=0.5):
+        """
+        Initializes the Random90Rotation class with probability.
+
+        Args:
+            p (float, optional): The probability of applying the 90-degree rotation. Must be between 0 and 1. Default is 0.5.
+        """
+        assert 0 <= p <= 1.0
+        self.p = p
+
+    def __call__(self, labels):
+        """
+        Applies random 90-degree rotation to an image and updates any instances like bounding boxes or keypoints accordingly.
+
+        Args:
+            labels (dict): A dictionary containing the keys 'img' and 'instances'. 'img' is the image to be rotated.
+                           'instances' is an object containing bounding boxes and optionally keypoints.
+
+        Returns:
+            (dict): The same dict with the rotated image and updated instances under the 'img' and 'instances' keys.
+        """
+        if random.random() > self.p:
+            return labels
+            
+        img = labels["img"]
+        instances = labels.pop("instances")
+        instances.convert_bbox(format="xywh")
+        h, w = img.shape[:2]
+        h_norm = 1 if instances.normalized else h
+        w_norm = 1 if instances.normalized else w
+
+        # Randomly choose rotation angle: 0, 90, -90, 180 degrees
+        angle = random.choice([0, 90, -90, 180])
+        
+        if angle == 0:
+            # No rotation
+            labels["img"] = img
+            labels["instances"] = instances
+            return labels
+        elif angle == 90:
+            # Rotate 90 degrees clockwise
+            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            instances.rotate90_clockwise(h_norm, w_norm)
+        elif angle == -90:
+            # Rotate 90 degrees counter-clockwise
+            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            instances.rotate90_counterclockwise(h_norm, w_norm)
+        elif angle == 180:
+            # Rotate 180 degrees
+            img = cv2.rotate(img, cv2.ROTATE_180)
+            instances.rotate180(h_norm, w_norm)
+
+        labels["img"] = np.ascontiguousarray(img)
+        labels["instances"] = instances
+        return labels
+
+
 class LetterBox:
     """Resize image and padding for detection, instance segmentation, pose."""
 
@@ -1003,6 +1067,7 @@ def v8_transforms(dataset, imgsz, hyp, stretch=False):
             RandomHSV(hgain=hyp.hsv_h, sgain=hyp.hsv_s, vgain=hyp.hsv_v),
             RandomFlip(direction="vertical", p=hyp.flipud),
             RandomFlip(direction="horizontal", p=hyp.fliplr, flip_idx=flip_idx),
+            Random90Rotation(p=hyp.rotate90),
         ]
     )  # transforms
 

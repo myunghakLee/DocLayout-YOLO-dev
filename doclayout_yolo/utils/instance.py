@@ -325,6 +325,93 @@ class Instances:
         if self.keypoints is not None:
             self.keypoints[..., 0] = w - self.keypoints[..., 0]
 
+    def rotate90_clockwise(self, h, w):
+        """Rotates bounding boxes, segments, and keypoints 90 degrees clockwise."""
+        if self._bboxes.format == "xyxy":
+            # For xyxy format: (x1, y1, x2, y2) -> (y1, h-x2, y2, h-x1)
+            x1, y1, x2, y2 = self.bboxes[:, 0].copy(), self.bboxes[:, 1].copy(), self.bboxes[:, 2].copy(), self.bboxes[:, 3].copy()
+            self.bboxes[:, 0] = y1
+            self.bboxes[:, 1] = h - x2
+            self.bboxes[:, 2] = y2
+            self.bboxes[:, 3] = h - x1
+        else:  # xywh format
+            # For xywh format: (cx, cy, w, h) -> (cy, h-cx, h, w)
+            cx, cy, bbox_w, bbox_h = self.bboxes[:, 0].copy(), self.bboxes[:, 1].copy(), self.bboxes[:, 2].copy(), self.bboxes[:, 3].copy()
+            self.bboxes[:, 0] = cy
+            self.bboxes[:, 1] = h - cx
+            self.bboxes[:, 2] = bbox_h
+            self.bboxes[:, 3] = bbox_w
+        
+        # Rotate segments: (x, y) -> (y, h-x)
+        if self.segments is not None and len(self.segments):
+            new_segments = self.segments.copy()
+            new_segments[..., 0] = self.segments[..., 1]  # x = y
+            new_segments[..., 1] = h - self.segments[..., 0]  # y = h - x
+            self.segments = new_segments
+        
+        # Rotate keypoints: (x, y, v) -> (y, h-x, v)
+        if self.keypoints is not None:
+            new_keypoints = self.keypoints.copy()
+            new_keypoints[..., 0] = self.keypoints[..., 1]  # x = y
+            new_keypoints[..., 1] = h - self.keypoints[..., 0]  # y = h - x
+            self.keypoints = new_keypoints
+
+    def rotate90_counterclockwise(self, h, w):
+        """Rotates bounding boxes, segments, and keypoints 90 degrees counter-clockwise."""
+        if self._bboxes.format == "xyxy":
+            # For xyxy format: (x1, y1, x2, y2) -> (w-y2, x1, w-y1, x2)
+            x1, y1, x2, y2 = self.bboxes[:, 0].copy(), self.bboxes[:, 1].copy(), self.bboxes[:, 2].copy(), self.bboxes[:, 3].copy()
+            self.bboxes[:, 0] = w - y2
+            self.bboxes[:, 1] = x1
+            self.bboxes[:, 2] = w - y1
+            self.bboxes[:, 3] = x2
+        else:  # xywh format
+            # For xywh format: (cx, cy, w, h) -> (w-cy, cx, h, w)
+            cx, cy, bbox_w, bbox_h = self.bboxes[:, 0].copy(), self.bboxes[:, 1].copy(), self.bboxes[:, 2].copy(), self.bboxes[:, 3].copy()
+            self.bboxes[:, 0] = w - cy
+            self.bboxes[:, 1] = cx
+            self.bboxes[:, 2] = bbox_h
+            self.bboxes[:, 3] = bbox_w
+        
+        # Rotate segments: (x, y) -> (w-y, x)
+        if self.segments is not None and len(self.segments):
+            new_segments = self.segments.copy()
+            new_segments[..., 0] = w - self.segments[..., 1]  # x = w - y
+            new_segments[..., 1] = self.segments[..., 0]  # y = x
+            self.segments = new_segments
+        
+        # Rotate keypoints: (x, y, v) -> (w-y, x, v)
+        if self.keypoints is not None:
+            new_keypoints = self.keypoints.copy()
+            new_keypoints[..., 0] = w - self.keypoints[..., 1]  # x = w - y
+            new_keypoints[..., 1] = self.keypoints[..., 0]  # y = x
+            self.keypoints = new_keypoints
+
+    def rotate180(self, h, w):
+        """Rotates bounding boxes, segments, and keypoints 180 degrees."""
+        if self._bboxes.format == "xyxy":
+            # For xyxy format: (x1, y1, x2, y2) -> (w-x2, h-y2, w-x1, h-y1)
+            x1, y1, x2, y2 = self.bboxes[:, 0].copy(), self.bboxes[:, 1].copy(), self.bboxes[:, 2].copy(), self.bboxes[:, 3].copy()
+            self.bboxes[:, 0] = w - x2
+            self.bboxes[:, 1] = h - y2
+            self.bboxes[:, 2] = w - x1
+            self.bboxes[:, 3] = h - y1
+        else:  # xywh format
+            # For xywh format: (cx, cy, w, h) -> (w-cx, h-cy, w, h)
+            cx, cy = self.bboxes[:, 0].copy(), self.bboxes[:, 1].copy()
+            self.bboxes[:, 0] = w - cx
+            self.bboxes[:, 1] = h - cy
+        
+        # Rotate segments: (x, y) -> (w-x, h-y)
+        if self.segments is not None and len(self.segments):
+            self.segments[..., 0] = w - self.segments[..., 0]
+            self.segments[..., 1] = h - self.segments[..., 1]
+        
+        # Rotate keypoints: (x, y, v) -> (w-x, h-y, v)
+        if self.keypoints is not None:
+            self.keypoints[..., 0] = w - self.keypoints[..., 0]
+            self.keypoints[..., 1] = h - self.keypoints[..., 1]
+
     def clip(self, w, h):
         """Clips bounding boxes, segments, and keypoints values to stay within image boundaries."""
         ori_format = self._bboxes.format
