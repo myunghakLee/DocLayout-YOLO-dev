@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument('--pretrain', default=None, required=False, type=str)
     parser.add_argument('--val', default=1, required=False, type=int)
     parser.add_argument('--val-period', default=1, required=False, type=int)
-    parser.add_argument('--plot', default=0, required=False, type=int)
+    parser.add_argument('--plot', default=1, required=False, type=int)
     parser.add_argument('--project', default=None, required=True, type=str)
     parser.add_argument('--resume', action=argparse.BooleanOptionalAction)
     parser.add_argument('--workers', default=4, required=False, type=int)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         plot = False
     
     # Train the model
-    name = f"yolov10{args.model}_{args.data}_epoch{args.epoch}_imgsz{args.image_size}_bs{args.batch_size}_pretrain_{pretrain_name}"
+    name = f"checkpoints/yolov10{args.model}_{args.data.split('/')[-2]}_epoch{args.epoch}_imgsz{args.image_size}_bs{args.batch_size}_rotate90_{args.rotate90}_pretrain_{pretrain_name}"
     results = model.train(
         data=f'{args.data}.yaml', 
         epochs=args.epoch, 
